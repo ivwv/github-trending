@@ -15,7 +15,7 @@ function createMarkdown(date, filename) {
 async function scrape(languages, filename) {
   const promises = languages.map(async (language) => {
     const url = `https://github.com/trending/${language}`;
-    const response = await axios.get(url, { httpsAgent, proxy: true }).catch((err) => {
+    const response = await axios.get(url /* { httpsAgent, proxy: true } */).catch((err) => {
       console.log(err);
     });
     const $ = cheerio.load(response.data);
