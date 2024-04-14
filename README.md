@@ -4,7 +4,7 @@
 
 ## Intro
 
-Tracking the most popular Github repos, updated daily(NodeJS version)
+Tracking the most popular Github repos, updated daily (NodeJS version)
 
 ## Run
 
