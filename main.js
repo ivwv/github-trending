@@ -41,7 +41,7 @@ async function scrape(languages, filename) {
           .text()
           .trim()
           .replaceAll("\n", "");
-        const repoMarkdown = `> [${title}](${url}):( ${formattedResult} ; Fork:${fork} )\n> ${description}\n\n`;
+        const repoMarkdown = `> [${title}](${url}):( ${formattedResult} ; Fork:${fork} )\n\n > ${description}\n\n`;
         return repoMarkdown;
       })
       .get();
