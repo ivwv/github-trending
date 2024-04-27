@@ -2,8 +2,7 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const fs = require("fs");
 const path = require("path");
-// const { HttpProxyAgent } = require("http-proxy-agent");
-// const httpsAgent = new HttpProxyAgent("http://127.0.0.1:7899");
+
 const writeToFile = (fileName, message) => {
   fs.appendFileSync(fileName, `${message}`);
 };
@@ -12,46 +11,67 @@ function createMarkdown(date, filename) {
   fs.writeFileSync(filename, `# ${date}\n`);
 }
 
-async function scrape(languages, filename) {
+async function scrapeTrending(url, filename) {
+  const response = await axios.get(url).catch((err) => {
+    console.log(err);
+  });
+  const $ = cheerio.load(response.data);
+  const items = $("div.Box article.Box-row");
+
+  const trendingMarkdown = `## Trending\n`;
+
+  handlerHtmlToMd($, items, trendingMarkdown, filename);
+}
+
+async function scrapeLanguages(languages, filename) {
   const promises = languages.map(async (language) => {
-    const url = `https://github.com/trending/${language}`;
-    const response = await axios.get(url /* { httpsAgent, proxy: true } */).catch((err) => {
+    const url = `https://p.ivwv.site/github.com/trending/${language}`;
+    const response = await axios.get(url).catch((err) => {
       console.log(err);
     });
     const $ = cheerio.load(response.data);
     const items = $("div.Box article.Box-row");
     const languageMarkdown = `## ${language}\n`;
 
-    const repos = items
-      .map((index, element) => {
-        const title = $(element)
-          .find(".lh-condensed a")
-          .text()
-          .trim()
-          .replaceAll("\n", "")
-          .replaceAll(" ", "");
-        const description = $(element).find("p.col-9").text().trim().replaceAll("\n", "");
-        const url = "https://github.com" + $(element).find(".lh-condensed a").attr("href");
-        const star = $(element).find(".octicon-star").parent().text().trim().replace(/\s+/g, " ");
-        const [starCount, todayCount, todayLabel] = star.split(" ");
-        const formattedResult = `${starCount}: ${todayCount} ; ${todayLabel} stars today`;
-        const fork = $(element)
-          .find(".octicon-repo-forked")
-          .parent()
-          .text()
-          .trim()
-          .replaceAll("\n", "");
-        const repoMarkdown = `> [${title}](${url}):( ${formattedResult} ; Fork:${fork} ) \n > ${description}\n\n`;
-        return repoMarkdown;
-      })
-      .get();
-
-    writeToFile(filename, languageMarkdown);
-    repos.forEach((repo) => writeToFile(filename, repo));
+    handlerHtmlToMd($, items, languageMarkdown, filename);
   });
 
   await Promise.allSettled(promises);
 }
+
+const handlerHtmlToMd = ($, items, trendingMarkdown, filename) => {
+  const repos = items
+    .map((index, element) => {
+      const title = $(element)
+        .find(".lh-condensed a")
+        .text()
+        .trim()
+        .replaceAll("\n", "")
+        .replaceAll(" ", "");
+      const description = $(element).find("p.col-9").text().trim().replaceAll("\n", "");
+      const url = "https://github.com" + $(element).find(".lh-condensed a").attr("href");
+      const language = $(element).find("span[itemprop='programmingLanguage']").text().trim();
+      const star = $(element).find(".octicon-star").parent().text().trim().replace(/\s+/g, " ");
+      const [starCount, todayCount, todayLabel] = star.split(" ");
+
+      const starShields = `![GitHub Repo stars](https://img.shields.io/github/stars/${title})`;
+      const formattedResult = `${starShields} ; ${todayLabel} stars today`;
+      const fork = $(element)
+        .find(".octicon-repo-forked")
+        .parent()
+        .text()
+        .trim()
+        .replaceAll("\n", "");
+      const languageShields = `![${language}](https://img.shields.io/badge/${language}-white?logo=${language}&logoColor=blue)`;
+      const forkShields = `![GitHub forks](https://img.shields.io/github/forks/${title})        `;
+      const repoMarkdown = `> [${title}](${url}) ${languageShields} : ( ${formattedResult} ; ${forkShields} ) \n > ${description}\n\n`;
+      return repoMarkdown;
+    })
+    .get();
+
+  writeToFile(filename, trendingMarkdown);
+  repos.forEach((repo) => writeToFile(filename, repo));
+};
 
 (async () => {
   const date = new Date().toISOString().slice(0, 10);
@@ -60,6 +80,11 @@ async function scrape(languages, filename) {
     fs.mkdirSync(year);
   }
   const filename = path.join(__dirname, `${year}/${date}.md`);
+
+  // First, scrape the trending repositories
+  createMarkdown(date, filename);
+  await scrapeTrending("https://p.ivwv.site/github.com/trending", filename);
+
   const languages = [
     "javascript",
     "python",
@@ -83,6 +108,7 @@ async function scrape(languages, filename) {
     "angular",
     "assembly",
   ];
-  createMarkdown(date, filename);
-  await scrape(languages, filename);
+
+  // Then, scrape repositories for specified languages
+  await scrapeLanguages(languages, filename);
 })();
