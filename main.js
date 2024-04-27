@@ -2,30 +2,30 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const fs = require("fs");
 const path = require("path");
+const host = `https://github.com/`;
 
 const writeToFile = (fileName, message) => {
   fs.appendFileSync(fileName, `${message}`);
 };
-
 function createMarkdown(date, filename) {
   fs.writeFileSync(filename, `# ${date}\n`);
 }
 
-async function scrapeTrending(url, filename) {
+async function scrapeTrending(url, title, filename) {
   const response = await axios.get(url).catch((err) => {
     console.log(err);
   });
   const $ = cheerio.load(response.data);
   const items = $("div.Box article.Box-row");
 
-  const trendingMarkdown = `## Trending\n`;
+  const trendingMarkdown = `## Trending-${title}\n`;
 
   handlerHtmlToMd($, items, trendingMarkdown, filename);
 }
 
 async function scrapeLanguages(languages, filename) {
   const promises = languages.map(async (language) => {
-    const url = `https://github.com/trending/${language}`;
+    const url = `${host}/trending/${language}`;
     const response = await axios.get(url).catch((err) => {
       console.log(err);
     });
@@ -41,7 +41,7 @@ async function scrapeLanguages(languages, filename) {
 
 const handlerHtmlToMd = ($, items, trendingMarkdown, filename) => {
   const repos = items
-    .map((index, element) => {
+    .map((_, element) => {
       const title = $(element)
         .find(".lh-condensed a")
         .text()
@@ -56,12 +56,6 @@ const handlerHtmlToMd = ($, items, trendingMarkdown, filename) => {
 
       const starShields = `![GitHub Repo stars](https://img.shields.io/github/stars/${title})`;
       const formattedResult = `${starShields} ; ${todayLabel} stars today`;
-      const fork = $(element)
-        .find(".octicon-repo-forked")
-        .parent()
-        .text()
-        .trim()
-        .replaceAll("\n", "");
       const languageShields = `![${language}](https://img.shields.io/badge/${language}-white?logo=${language}&logoColor=blue)`;
       const forkShields = `![GitHub forks](https://img.shields.io/github/forks/${title})        `;
       const repoMarkdown = `> [${title}](${url}) ${languageShields} : ( ${formattedResult} ; ${forkShields} ) \n > ${description}\n\n`;
@@ -83,7 +77,9 @@ const handlerHtmlToMd = ($, items, trendingMarkdown, filename) => {
 
   // First, scrape the trending repositories
   createMarkdown(date, filename);
-  await scrapeTrending("https://github.com/trending", filename);
+  await scrapeTrending(`${host}/trending?since=dail`, "daily", filename);
+  await scrapeTrending(`${host}/trending?since=weekl`, "weekly", filename);
+  await scrapeTrending(`${host}/trending?since=monthl`, "monthly", filename);
 
   const languages = [
     "javascript",
