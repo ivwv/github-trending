@@ -21,22 +21,7 @@ async function scrapeTrending(url, title, filename) {
   const trendingMarkdown = `## Trending-${title}\n`;
 
   handlerHtmlToMd($, items, trendingMarkdown, filename);
-}
-
-async function scrapeLanguages(languages, filename) {
-  const promises = languages.map(async (language) => {
-    const url = `${host}/trending/${language}`;
-    const response = await axios.get(url).catch((err) => {
-      console.log(err);
-    });
-    const $ = cheerio.load(response.data);
-    const items = $("div.Box article.Box-row");
-    const languageMarkdown = `## ${language}\n`;
-
-    handlerHtmlToMd($, items, languageMarkdown, filename);
-  });
-
-  await Promise.allSettled(promises);
+  console.log(`Scraped ${title} repositories`);
 }
 
 const handlerHtmlToMd = ($, items, trendingMarkdown, filename) => {
@@ -81,30 +66,33 @@ const handlerHtmlToMd = ($, items, trendingMarkdown, filename) => {
   await scrapeTrending(`${host}/trending?since=weekl`, "weekly", filename);
   await scrapeTrending(`${host}/trending?since=monthly`, "monthly", filename);
 
+  // Languages
   const languages = [
     "javascript",
-    "python",
-    "java",
     "typescript",
+    "vue",
+    "react",
+    "css",
+    "html",
+    "angular",
+    "java",
+    "go",
+    "shell",
+    "python",
     "php",
     "ruby",
-    "go",
+    "rust",
     "c#",
     "swift",
     "kotlin",
-    "rust",
     "c++",
-    "shell",
-    "html",
-    "css",
     "dart",
     "objective-c",
-    "vue",
-    "react",
-    "angular",
     "assembly",
   ];
-
   // Then, scrape repositories for specified languages
-  await scrapeLanguages(languages, filename);
+  for (let i = 0; i < languages.length; i++) {
+    const language = languages[i];
+    await scrapeTrending(`${host}/trending/${language}`, language, filename);
+  }
 })();
