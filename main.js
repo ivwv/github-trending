@@ -79,7 +79,7 @@ const handlerHtmlToMd = ($, items, trendingMarkdown, filename) => {
   createMarkdown(date, filename);
   await scrapeTrending(`${host}/trending?since=dail`, "daily", filename);
   await scrapeTrending(`${host}/trending?since=weekl`, "weekly", filename);
-  await scrapeTrending(`${host}/trending?since=monthl`, "monthly", filename);
+  await scrapeTrending(`${host}/trending?since=monthly`, "monthly", filename);
 
   const languages = [
     "javascript",
