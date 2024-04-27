@@ -25,7 +25,7 @@ async function scrapeTrending(url, filename) {
 
 async function scrapeLanguages(languages, filename) {
   const promises = languages.map(async (language) => {
-    const url = `https://p.ivwv.site/github.com/trending/${language}`;
+    const url = `https://github.com/trending/${language}`;
     const response = await axios.get(url).catch((err) => {
       console.log(err);
     });
@@ -83,7 +83,7 @@ const handlerHtmlToMd = ($, items, trendingMarkdown, filename) => {
 
   // First, scrape the trending repositories
   createMarkdown(date, filename);
-  await scrapeTrending("https://p.ivwv.site/github.com/trending", filename);
+  await scrapeTrending("https://github.com/trending", filename);
 
   const languages = [
     "javascript",
