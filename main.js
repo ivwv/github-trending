@@ -80,7 +80,7 @@ const handlerHtmlToMd = ($, items, trendingMarkdown, filename) => {
       })
       .get();
 
-    writeToFile(filename, languageMarkdown);
+    writeToFile(filename, trendingMarkdown);
     repos.forEach((repo) => writeToFile(filename, repo));
 };
 
