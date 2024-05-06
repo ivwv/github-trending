@@ -24,9 +24,40 @@ async function scrapeTrending(url, title, filename) {
   console.log(`Scraped ${title} repositories`);
 }
 
+/**
+ * Due to the large amount of data, you will request tens of thousands of shields pictures and cancel the use of shields pictures
+ */
+// const handlerHtmlToMd = ($, items, trendingMarkdown, filename) => {
+//   const repos = items
+//     .map((_, element) => {
+//       const title = $(element)
+//         .find(".lh-condensed a")
+//         .text()
+//         .trim()
+//         .replaceAll("\n", "")
+//         .replaceAll(" ", "");
+//       const description = $(element).find("p.col-9").text().trim().replaceAll("\n", "");
+//       const url = "https://github.com" + $(element).find(".lh-condensed a").attr("href");
+//       const language = $(element).find("span[itemprop='programmingLanguage']").text().trim();
+//       const star = $(element).find(".octicon-star").parent().text().trim().replace(/\s+/g, " ");
+//       const [starCount, todayCount, todayLabel] = star.split(" ");
+
+//       const starShields = `![GitHub Repo stars](https://img.shields.io/github/stars/${title})`;
+//       const formattedResult = `${starShields} ; ${todayLabel} stars today`;
+//       const languageShields = `![${language}](https://img.shields.io/badge/${language}-white?logo=${language}&logoColor=blue)`;
+//       const forkShields = `![GitHub forks](https://img.shields.io/github/forks/${title})        `;
+//       const repoMarkdown = `> [${title}](${url}) ${languageShields} : ( ${formattedResult} ; ${forkShields} ) \n > ${description}\n\n`;
+//       return repoMarkdown;
+//     })
+//     .get();
+
+//   writeToFile(filename, trendingMarkdown);
+//   repos.forEach((repo) => writeToFile(filename, repo));
+// };
+
 const handlerHtmlToMd = ($, items, trendingMarkdown, filename) => {
   const repos = items
-    .map((_, element) => {
+    .map((index, element) => {
       const title = $(element)
         .find(".lh-condensed a")
         .text()
@@ -41,13 +72,18 @@ const handlerHtmlToMd = ($, items, trendingMarkdown, filename) => {
 
       const starShields = `![GitHub Repo stars](https://img.shields.io/github/stars/${title})`;
       const formattedResult = `${starShields} ; ${todayLabel} stars today`;
+      const fork = $(element)
+        .find(".octicon-repo-forked")
+        .parent()
+        .text()
+        .trim()
+        .replaceAll("\n", "");
       const languageShields = `![${language}](https://img.shields.io/badge/${language}-white?logo=${language}&logoColor=blue)`;
       const forkShields = `![GitHub forks](https://img.shields.io/github/forks/${title})        `;
       const repoMarkdown = `> [${title}](${url}) ${languageShields} : ( ${formattedResult} ; ${forkShields} ) \n > ${description}\n\n`;
       return repoMarkdown;
     })
     .get();
-
   writeToFile(filename, trendingMarkdown);
   repos.forEach((repo) => writeToFile(filename, repo));
 };
